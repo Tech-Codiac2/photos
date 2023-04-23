@@ -1,0 +1,473 @@
+Aim: Write a program to store username and password in an encrypted form in a database to implement integrity lock.
+
+SQL code
+CREATE TABLE UserNamePasswordDemo(
+    U_Id int unsigned NOT NULL AUTO_INCREMENT primary key,
+    UserId varchar(255) DEFAULT NULL unique key,
+    UserPassword varchar(255) DEFAULT NULL
+);
+
+
+INSERT INTO UserNamePasswordDemo(UserId, UserPassword)
+VALUES ('user@gg.com', MD5('user1234'));
+SELECT * FROM UserNamePasswordDemo;;; 
+
+
+sql mgmt code
+CREATE TABLE UserNamePasswordDemo(
+    U_Id int identity(1,1) primary key,
+    UserId varchar(255) DEFAULT NULL,
+    UserPassword varchar(255) DEFAULT NULL
+);
+INSERT INTO UserNamePasswordDemo(UserId, UserPassword)
+VALUES ('user@gg.com', CONVERT(VARCHAR(32), HASHBYTES('MD5', 'user1234'), 2));
+
+
+
+
+Aim:Write SQL query to retrieve sensitive information from less sensitive queries
+
+CREATE TABLE Employee (
+    EmployeeID INT,
+    Name VARCHAR(50),
+    EmployeeGender VARCHAR(10),
+    Salary INT
+);
+
+INSERT INTO Employee VALUES
+(1, 'Aniket', 'Male', 40000),
+(2, 'jasmin', 'Female', 0),
+(3, 'anuja', 'FeMale', 40000),
+(4, 'ashutosh', 'Male', 40000),
+(5, 'niddhi', 'FeMale', 40000),
+(6, 'amal', 'Male', 40000);
+
+SELECT Name, EmployeeGender, 
+    CASE EmployeeGender
+        WHEN 'Male' THEN 'Handsome'
+        WHEN 'FeMale' THEN 'Beautiful'
+    END AS 'asdf'
+FROM Employee;
+
+SELECT Name, Salary, 
+    CASE 
+        WHEN Name LIKE 'A%' AND Salary >= 40000 THEN 'A'
+        WHEN Name LIKE 'B%' AND Salary >= 40000 THEN 'B'
+        ELSE 'C'
+    END AS "Grade"
+FROM Employee;
+
+
+
+
+
+Aim: Write SQL query to create a view to implement concept of views and commutative
+
+CREATE TABLE Employees
+(EmployeeID    INT NOT NULL, 
+ Name          NVARCHAR(50) NOT NULL, 
+ Title         NVARCHAR(100) NULL, 
+ HireDate      DATETIME NOT NULL, 
+ VacationHours SMALLINT NOT NULL, 
+ Salary        DECIMAL(19, 4) NOT NULL
+);
+
+CREATE TABLE Products
+(ProductID INT NOT NULL, 
+ ProductName      NVARCHAR(255) NOT NULL, 
+ Price     DECIMAL(19, 4) NOT NULL
+);
+
+CREATE TABLE Sales
+(SalesID   UNIQUEIDENTIFIER NOT NULL, 
+ ProductID  INT NOT NULL, 
+ EmployeeID INT NOT NULL, 
+ Quantity   SMALLINT NOT NULL, 
+ SaleDate   DATETIME NOT NULL
+);
+
+
+INSERT INTO Employees (EmployeeID, Name, Title, HireDate, VacationHours, Salary)
+VALUES (1, 'Amal', 'Manager', '2022-01-01', 10, 5000),
+(2, 'Ashutosh', 'Salesperson', '2022-01-02', 8, 3000),
+(3, 'Deep', 'Engineer', '2022-01-03', 12, 6000),
+(4, 'Manjeet', 'Analyst', '2022-01-04', 7, 4000),
+(5, 'Mrugank', 'Developer', '2022-01-05', 11, 5500),
+(6, 'Risab', 'Salesperson', '2022-01-06', 9, 3200),
+(7, 'Yash', 'Engineer', '2022-01-07', 13, 7000),
+(8, 'Vishal', 'Analyst', '2022-01-08', 6, 4500),
+(9, 'Ashish', 'Developer', '2022-01-09', 12, 6000),
+(10, 'Aniket', 'Manager', '2022-01-10', 11, 5500);
+
+INSERT INTO Products (ProductID, ProductName, Price)
+VALUES (1, 'Product A', 100),
+(2, 'Product B', 200),
+(3, 'Product C', 300),
+(4, 'Product D', 150),
+(5, 'Product E', 250),
+(6, 'Product F', 180),
+(7, 'Product G', 350),
+(8, 'Product H', 120),
+(9, 'Product I', 280),
+(10, 'Product J', 220);
+
+INSERT INTO Sales (SalesID, ProductID, EmployeeID, Quantity, SaleDate)
+VALUES (NEWID(), 1, 1, 3, '2022-02-01'),
+(NEWID(), 2, 2, 2, '2022-02-02'),
+(NEWID(), 3, 3, 4, '2022-02-03'),
+(NEWID(), 4, 4, 1, '2022-02-04'),
+(NEWID(), 5, 5, 5, '2022-02-05'),
+(NEWID(), 6, 6, 3, '2022-02-06'),
+(NEWID(), 7, 7, 2, '2022-02-07'),
+(NEWID(), 8, 8, 3, '2022-02-08'),
+(NEWID(), 9, 9, 1, '2022-02-09'),
+(NEWID(), 10, 10, 4, '2022-02-10');
+
+
+CREATE VIEW ProductsAboveAveragePrice AS
+SELECT ProductName, Price
+FROM Products
+WHERE Price > (SELECT AVG(Price) FROM Products)
+
+
+
+
+Aim: Write a program to implement SSL
+
+<!DOCTYPE html>
+<html>
+<body>
+<form>
+<div class="container">
+<label>Username : </label>
+<input type="text" placeholder="Enter Username" name="username" required>
+<br><br>
+<label>Password : </label>
+<input type="password" placeholder="Enter Password" name="password" required>
+<button type="submit">Login</button>
+</div>
+</form>
+</body>
+</html>
+
+//ClassServer.java
+import java.io.*;
+import java.net.*;
+import javax.net.*;
+public abstract class server implements Runnable {
+private ServerSocket server = null;
+protected server(ServerSocket ss)
+{
+server = ss;
+newListener();
+}
+public abstract byte[] getBytes(String path)
+throws IOException, FileNotFoundException;
+public void run()
+{
+Socket socket;
+try {
+socket = server.accept();
+} catch (IOException e) {
+System.out.println("Class Server died: " + e.getMessage());
+e.printStackTrace();
+return;
+}
+newListener();
+try {
+OutputStream rawOut = socket.getOutputStream();
+PrintWriter out = new PrintWriter(
+new BufferedWriter(
+new OutputStreamWriter(
+rawOut)));
+try {
+// get path to class file from header
+BufferedReader in =new BufferedReader(new InputStreamReader(socket.getInputStream()));
+String path = getPath(in);
+byte[] bytecodes = getBytes(path);
+try {
+out.print("HTTP/1.0 200 OK\r\n");
+out.print("Content-Length: " + bytecodes.length +"\r\n");
+out.print("Content-Type: text/html\r\n\r\n");
+out.flush();
+rawOut.write(bytecodes);
+rawOut.flush();
+} catch (IOException ie) {
+ie.printStackTrace();
+return;
+}
+} catch (Exception e) {
+e.printStackTrace();
+// write out error response
+out.println("HTTP/1.0 400 " + e.getMessage() + "\r\n");
+out.println("Content-Type: text/html\r\n\r\n");
+out.flush();
+}
+} catch (IOException ex) {
+System.out.println("error writing response: " + ex.getMessage());
+ex.printStackTrace();
+} finally {
+try {
+socket.close();
+} catch (IOException e) {
+}
+}
+}
+private void newListener()
+{
+(new Thread(this)).start();
+}
+private static String getPath(BufferedReader in)
+throws IOException
+{
+String line = in.readLine();
+String path = "";
+// extract class from GET line
+if (line.startsWith("GET /")) {
+line = line.substring(5, line.length()-1).trim();
+int index = line.indexOf(' ');
+if (index != -1) {
+path = line.substring(0, index);
+}
+}
+// eat the rest of header
+do {
+line = in.readLine();
+} while ((line.length() != 0) &&
+(line.charAt(0) != '\r') && (line.charAt(0) != '\n'));
+if (path.length() != 0) {
+return path;
+} else {
+throw new IOException("Malformed Header");
+}
+}
+}
+
+
+
+
+
+/*Aim: Write a program to digitally sign MIME to create an opaque signature.*/
+
+
+
+
+package mime2;
+
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.security.Signature;
+import java.util.Scanner;
+
+/**
+ *
+ * @author akhil
+ */
+public class Mime2 {
+
+
+ 
+public static void main(String args[]) throws Exception {
+//Accepting text from user
+Scanner sc = new Scanner(System.in);
+System.out.println("Enter some text");
+String msg = sc.nextLine();
+//Creating KeyPair generator object
+KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("DSA");
+//Initializing the key pair generator 
+keyPairGen.initialize(2048);
+//Generate the pair of keys
+KeyPair pair = keyPairGen.generateKeyPair();
+//Getting the private key from the key pair
+PrivateKey privKey = pair.getPrivate();
+//Creating a Signature object
+Signature sign = Signature.getInstance("SHA256withDSA");
+//Initialize the signature 
+sign.initSign(privKey); 
+byte[] bytes = "msg".getBytes();
+//Adding data to the signature 
+sign.update(bytes);
+//Calculating the signature
+byte[] signature = sign.sign(); //Printing the signature
+System.out.println("Digital signature for given text: " +new String(signature, "UTF8"));
+}
+}
+
+    
+
+
+    
+
+/*
+Aim: Write a program to generate DSA SSH key. 
+
+ */
+//package dsa;
+
+//package com.javacodegeeks.snippets.core; 
+
+import java.security.KeyPair; 
+import java.security.KeyPairGenerator; 
+import java.security.PrivateKey; 
+import java.security.PublicKey; 
+public class Dsa {
+
+   
+
+    public static void main(String[] args) { 
+
+        try { 
+            // Generate a 1024-bit Digital Signature Algorithm (DSA) key pair 
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DSA"); 
+            keyGen.initialize(1024); 
+            KeyPair keypair = keyGen.genKeyPair(); 
+            PrivateKey privateKey = keypair.getPrivate(); 
+            PublicKey publicKey = keypair.getPublic(); 
+            System.out.println(privateKey + "\n" + publicKey); 
+
+            // Generate a 576-bit DH key pair 
+            keyGen = KeyPairGenerator.getInstance("DH"); 
+            keyGen.initialize(576); 
+            keypair = keyGen.genKeyPair(); 
+            privateKey = keypair.getPrivate(); 
+            publicKey = keypair.getPublic(); 
+            System.out.println(privateKey + "\n" + publicKey); 
+
+            // Generate a 1024-bit RSA key pair 
+            keyGen = KeyPairGenerator.getInstance("RSA"); 
+            keyGen.initialize(1024); 
+            keypair = keyGen.genKeyPair(); 
+            privateKey = keypair.getPrivate(); 
+            publicKey = keypair.getPublic(); 
+            System.out.println(privateKey + "\n" + publicKey); 
+        } catch (java.security.NoSuchAlgorithmException e) { 
+            // handle exception
+            e.printStackTrace();
+        } 
+    } 
+}
+
+    
+
+/*
+ Aim: Write a program to implement multilevel security.
+
+ */
+package multilvlsec;
+
+
+
+   
+class Electronics { public Electronics(){
+System.out.println("Class Electronics");
+}
+public void deviceType() {
+System.out.println("Device Type: Electronics");
+}
+}
+class Television extends Electronics { public Television() {
+System.out.println("Class Television");
+}
+public void category() {
+System.out.println("Category - Television");
+}
+}
+class LED extends Television { public LED() {
+System.out.println("Class LED");
+}
+public void display_tech() {
+System.out.println("Display Technology- LED");
+}
+}
+public class Multilvlsec {
+public static void main(String[] arguments) { LED led = new LED();
+led.deviceType(); led.category(); led.display_tech();
+}
+}
+
+    
+
+
+/*
+Aim: Write a program to Demonstrates how to encrypt and decrypt the content of an XML node using 128-bit CBC AES encryption
+ */
+package xmlencrdecry;
+
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Scanner;
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
+/**
+ * Program to Encrypt/Decrypt String Using AES 128 bit Encryption Algorithm
+ */
+public class Xmlencrdecry  {
+
+    private static final String ENCRYPTION_KEY = "ABCDEFGHIJKLMNOP";
+    private static final String CHARACTER_ENCODING = StandardCharsets.UTF_8.name();
+    private static final String CIPHER_TRANSFORMATION = "AES/CBC/PKCS5PADDING";
+    private static final String AES_ENCRYPTION_ALGORITH = "AES";
+
+    /**
+     * Method for Encrypt Plain String Data
+     *
+     * @param plainText
+     * @return encryptedText
+     */
+    public static String encrypt(String plainText) {
+        String encryptedText = "";
+        try {
+            Cipher cipher = Cipher.getInstance(CIPHER_TRANSFORMATION);
+            byte[] key = ENCRYPTION_KEY.getBytes(CHARACTER_ENCODING);
+            SecretKeySpec secretKey = new SecretKeySpec(key, AES_ENCRYPTION_ALGORITH);
+            IvParameterSpec ivparameterspec = new IvParameterSpec(key);
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivparameterspec);
+            byte[] cipherText = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
+            encryptedText = Base64.getEncoder().encodeToString(cipherText);
+        } catch (Exception e) {
+            System.err.println("Encrypt Exception : " + e.getMessage());
+        }
+        return encryptedText;
+    }
+
+    /**
+     * Method For Get encryptedText and Decrypted provided String
+     *
+     * @param encryptedText
+     * @return decryptedText
+     */
+    public static String decrypt(String encryptedText) {
+        String decryptedText = "";
+        try {
+            Cipher cipher = Cipher.getInstance(CIPHER_TRANSFORMATION);
+            byte[] key = ENCRYPTION_KEY.getBytes(CHARACTER_ENCODING);
+            SecretKeySpec secretKey = new SecretKeySpec(key, AES_ENCRYPTION_ALGORITH);
+            IvParameterSpec ivparameterspec = new IvParameterSpec(key);
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, ivparameterspec);
+            byte[] cipherText = Base64.getDecoder().decode(encryptedText.getBytes(StandardCharsets.UTF_8));
+            decryptedText = new String(cipher.doFinal(cipherText), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            System.err.println("decrypt Exception : " + e.getMessage());
+        }
+        return decryptedText;
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Enter String : ");
+        String plainString = sc.nextLine();
+        String encyptStr = encrypt(plainString);
+        String decryptStr = decrypt(encyptStr);
+        System.out.println("Plain String : " + plainString);
+        System.out.println("Encrypt String : " + encyptStr);
+        System.out.println("Decrypt String : " + decryptStr);
+    }
+}
+
+    
+
+
